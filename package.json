@@ -4,7 +4,8 @@
   "description": "test",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "uglifyjs --compress --mangle --output dist/haha.min.js -- haha.js"
   },
   "repository": {
     "type": "git",
@@ -14,5 +15,8 @@
     "test"
   ],
   "author": "test",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "uglify-js": "^3.17.0"
+  }
 }
