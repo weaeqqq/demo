@@ -80,7 +80,8 @@ const match100 = str => {
 }
 
 // 浮点数计算精度
-const accMul = (arg1, arg2, type) => {
+const accMul = (options) => {
+    const {num: arg1, num2: arg2, type = "addition", decimal = 2 } = options;
     const types = {
         addition: 'addition', // 加法
         subtraction: 'subtraction', // 减法
@@ -105,6 +106,6 @@ const accMul = (arg1, arg2, type) => {
         result = (arg1 * m / arg2 * m) / (m * m);
     }
 
-    result = result.toString().split('.')[1]?.length > 2 ? result.toFixed(2) : result;
+    result = result.toString().split('.')[1]?.length > 2 ? result.toFixed(decimal) : result;
     return result;
 }
