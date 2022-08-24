@@ -134,6 +134,7 @@ const getUUID = () => {
 
 // chrome桌面提醒
 const notify = async (options) => {
+  // chrome浏览器http网站开启桌面提醒 https://www.codesky.me/archives/using-notification-api-in-chrome.wind
   // 先获取通知接口权限
   var status = await Notification.requestPermission() === "granted";
   if (!status) {
