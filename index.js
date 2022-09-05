@@ -164,3 +164,18 @@ const isEmpty = (obj) => {
   }
   return true;
 }
+
+// tree转换为list
+const treeToList = (data) => {
+  let list = [];
+  const loop = (data) => {
+    data.forEach((item) => {
+      list.push(item);
+      if (item.children) {
+        loop(item.children);
+      }
+    });
+  };
+  loop(data);
+  return list;
+}
