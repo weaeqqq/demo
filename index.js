@@ -179,3 +179,29 @@ const treeToList = (data) => {
   loop(data);
   return list;
 }
+
+// 获取时段
+function getTimeSeries(startTime, endTime) {
+  const TIME_LIST = Array(48).fill("0");
+  const isHasError = ![startTime, endTime].every(item => item.includes(":"));
+  if (isHasError) {
+    console.error("请输入正确的时间格式，如：00:00");
+    return TIME_LIST.join("");
+  }
+  
+  let [start1, start2] = startTime.split(":");
+  let [end1, end2] = endTime.split(":");
+  let start = start2 === "00" ? +start1 : +start1 + 0.5;
+  let end = end2 === "00" ? +end1 : +end1 + 0.5;
+  start = Math.ceil(start) * 2;
+  end = Math.min(end * 2, TIME_LIST.length);
+
+  for (let i = start; i < end; i++) {
+    TIME_LIST[i] = "1";
+  }
+  return TIME_LIST.join("");
+}
+/*
+getTimeSeries("01:00", "01:30")
+'001000000000000000000000000000000000000000000000'
+*/
