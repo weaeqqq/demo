@@ -1,3 +1,220 @@
+<!--
+  <FormDialog
+    :callFunction="callFunction"
+    @ok="handleEditAccountSuc"
+    ref="FormDialog"
+  />
+  <el-button type="primary" @click="handleEditAccount({...}}})">编辑账号</el-button>
+  <el-button type="primary" @click="handleAddAccount">添加账号</el-button>
+
+  methods: {
+    getFormData(type, data) {
+      this.currentRow = data;
+      const isEdit = type === "edit";
+
+      const optimizeUsers = this.optimizeUsers.filter((item) => item.is_lock === 0);
+      const userList = optimizeUsers;
+
+      if (data?.owner_user_id && !optimizeUsers.find((user) => user.user_id == data.owner_user_id)) {
+        const option = { user_name_alias: data.user_name, user_id: data.owner_user_id };
+        userList.unshift(option);
+      }
+      const userDisabled = !this.systemPermissions.user_permission;
+
+      const noteValidator = (rule, value, callback) => {
+        if (!value) {
+          return callback();
+        }
+        if (this.$utils.getBytes(value) > 40) {
+          return callback("不能超过40个字符,一个汉字算2个字符");
+        } else {
+          return callback();
+        }
+      };
+
+      const CURRENCY_LSIT = Object.keys(CURRENCY_TYPE).map((key) => {
+        const label = key === "CNY" ? "人民币" : CURRENCY_TYPE[key].name;
+        return {
+          label: `${label}(${key})`,
+          value: key,
+        };
+      });
+
+      const columns = [
+        { label: "账户名称", prop: "advertiser_name", itemType: "input", attrs: { disabled: isEdit } },
+        { label: "账户邮箱", prop: "email", itemType: "input", attrs: { disabled: isEdit } },
+        {
+          label: "账户货币",
+          prop: "currency_code",
+          itemType: "select",
+          options: CURRENCY_LSIT,
+          attrs: {
+            clearable: true,
+            filterable: true,
+            disabled: isEdit,
+          },
+        },
+        { label: "Organization", prop: "advertiser_nick", itemType: "input", attrs: { disabled: isEdit } },
+        {
+          label: "Org core ID",
+          prop: "advertiser_id",
+          itemType: "input",
+          attrs: {
+            disabled: isEdit,
+            placeholder: "请输入Org core ID, 只能输入数字",
+          },
+          events: {
+            input(val, target){
+              val = val.replace(/[^\d]/g, '');
+              target.model.advertiser_id = val;
+            },
+          }
+        },
+        { label: "Organization ID", prop: "access_token", itemType: "input", attrs: { disabled: isEdit } },
+        { label: "API Key", prop: "refresh_token", itemType: "input" },
+        { label: "Secret Key", prop: "develop_app_secret", itemType: "input" },
+        { label: "Key ID", prop: "develop_app_key", itemType: "input" },
+        {
+          label: "所属人员",
+          prop: "owner_user_id",
+          itemType: "select",
+          options: userList,
+          valueString: "user_id",
+          labelString: "user_name_alias",
+          attrs: {
+            clearable: true,
+            filterable: true,
+            disabled: userDisabled,
+          },
+        },
+        {
+          label: "项目",
+          prop: "media_project_id",
+          itemType: "select",
+          options: this.projectList,
+          valueString: "media_project_id",
+          labelString: "media_project_name",
+          attrs: {
+            filterable: true,
+          },
+        },
+        {
+          label: "备注信息",
+          prop: "note",
+          itemType: "input",
+          attrs: {
+            type: "textarea",
+            rows: 3,
+          },
+        },
+        {
+          label: "投放状态",
+          prop: "advertiser_status",
+          itemType: "radio",
+          popoverContent: "账户停投后不会对计划状态和数据报表产生任何影响，在主面板和新建计划时将不再加载该账户的相关信息。",
+          options: [
+            { value: "1", label: "启用" },
+            { value: "0", label: "停投" },
+          ],
+        },
+      ];
+
+      const model = {
+        advertiser_name: "",
+        currency_code: "USD",
+        email: "",
+        advertiser_nick: "",
+        advertiser_id: "",
+        access_token: "",
+        refresh_token: "",
+        develop_app_secret: "",
+        develop_app_key: "",
+        owner_user_id: this.account.user_id,
+        media_project_id: "",
+        note: "",
+        advertiser_status: "1",
+      };
+
+      if (isEdit) {
+        Object.keys(model).forEach((key) => {
+          if (_.has(data, key)) {
+            model[key] = data[key];
+          }
+        });
+      }
+
+      const rules = {
+        advertiser_name: [{ required: true, message: "请输入账户名称", trigger: "blur" }],
+        email: [
+          { required: true, message: "请输入账户邮箱", trigger: "blur" },
+          { type: "email", message: "邮箱格式不正确", trigger: "blur" }
+        ],
+        currency_code: [{ required: true, message: "请选择货币", trigger: "change" }],
+        advertiser_id: [{ required: true, message: "请输入Org core ID", trigger: "blur" }],
+        access_token: [{ required: true, message: "请输入Organization ID", trigger: "blur" }],
+        refresh_token: [{ required: true, message: "请输入API Key", trigger: "blur" }],
+        develop_app_secret: [{ required: true, message: "请输入Secret Key", trigger: "blur" }],
+        develop_app_key: [{ required: true, message: "请输入Key ID", trigger: "blur" }],
+        owner_user_id: [{ required: true, message: "请选择所属人员", trigger: "change" }],
+        note: [{ trigger: "blur", validator: noteValidator }],
+      };
+
+      const result = {
+        title: isEdit ? "编辑账户" : "新增账户",
+        columns,
+        model,
+        rules,
+        isEdit,
+      };
+
+      return _.cloneDeep(result);
+    },
+    // 新增账户
+    handleAddAccount() {
+      const data = this.getFormData("add", {});
+      this.$refs.FormDialog.open(data);
+    },
+    // 编辑账户
+    handleEditAccount(row) {
+      const data = this.getFormData("edit", row);
+      this.$refs.FormDialog.open(data);
+    },
+    // 新增编辑
+    callFunction(params) {
+      Object.assign(params, {
+        media_type: "unity",
+        advertiser_ids: [''],
+      });
+
+      const { media_account_id } = this.currentRow;
+      if (media_account_id) {
+        params.media_account_id = media_account_id;
+      }
+
+      if (media_account_id) {
+        return mediaApi
+          .update(params)
+          .then((res) => {
+            this.$message.success("编辑成功");
+            return true;
+          })
+          .catch(() => false);
+      }
+
+      return this.$axios
+        .post("/Delo/Account/saveAccount", params)
+        .then((res) => {
+          this.$message.success("新增账户成功");
+          return true;
+        })
+        .catch(() => false);
+    },
+
+    callFunction () {
+      return this.$api.editAccount(this.form)
+    }
+  }
+-->
 <template>
   <el-dialog
     :title="title"
@@ -89,224 +306,6 @@
 </template>
 
 <script>
-/**
- * @description: 表单弹窗
- *  <FormDialog
-      :callFunction="callFunction"
-      @ok="handleEditAccountSuc"
-      ref="FormDialog"
-    />
-
-    methods: {
-      getFormData(type, data) {
-        this.currentRow = data;
-        const isEdit = type === "edit";
-
-        const optimizeUsers = this.optimizeUsers.filter((item) => item.is_lock === 0);
-        const userList = optimizeUsers;
-
-        if (data?.owner_user_id && !optimizeUsers.find((user) => user.user_id == data.owner_user_id)) {
-          const option = { user_name_alias: data.user_name, user_id: data.owner_user_id };
-          userList.unshift(option);
-        }
-        const userDisabled = !this.systemPermissions.user_permission;
-
-        const noteValidator = (rule, value, callback) => {
-          if (!value) {
-            return callback();
-          }
-          if (this.$utils.getBytes(value) > 40) {
-            return callback("不能超过40个字符,一个汉字算2个字符");
-          } else {
-            return callback();
-          }
-        };
-
-        const CURRENCY_LSIT = Object.keys(CURRENCY_TYPE).map((key) => {
-          const label = key === "CNY" ? "人民币" : CURRENCY_TYPE[key].name;
-          return {
-            label: `${label}(${key})`,
-            value: key,
-          };
-        });
-
-        const columns = [
-          { label: "账户名称", prop: "advertiser_name", itemType: "input", attrs: { disabled: isEdit } },
-          { label: "账户邮箱", prop: "email", itemType: "input", attrs: { disabled: isEdit } },
-          {
-            label: "账户货币",
-            prop: "currency_code",
-            itemType: "select",
-            options: CURRENCY_LSIT,
-            attrs: {
-              clearable: true,
-              filterable: true,
-              disabled: isEdit,
-            },
-          },
-          { label: "Organization", prop: "advertiser_nick", itemType: "input", attrs: { disabled: isEdit } },
-          {
-            label: "Org core ID",
-            prop: "advertiser_id",
-            itemType: "input",
-            attrs: {
-              disabled: isEdit,
-              placeholder: "请输入Org core ID, 只能输入数字",
-            },
-            events: {
-              input(val, target){
-                val = val.replace(/[^\d]/g, '');
-                target.model.advertiser_id = val;
-              },
-            }
-          },
-          { label: "Organization ID", prop: "access_token", itemType: "input", attrs: { disabled: isEdit } },
-          { label: "API Key", prop: "refresh_token", itemType: "input" },
-          { label: "Secret Key", prop: "develop_app_secret", itemType: "input" },
-          { label: "Key ID", prop: "develop_app_key", itemType: "input" },
-          {
-            label: "所属人员",
-            prop: "owner_user_id",
-            itemType: "select",
-            options: userList,
-            valueString: "user_id",
-            labelString: "user_name_alias",
-            attrs: {
-              clearable: true,
-              filterable: true,
-              disabled: userDisabled,
-            },
-          },
-          {
-            label: "项目",
-            prop: "media_project_id",
-            itemType: "select",
-            options: this.projectList,
-            valueString: "media_project_id",
-            labelString: "media_project_name",
-            attrs: {
-              filterable: true,
-            },
-          },
-          {
-            label: "备注信息",
-            prop: "note",
-            itemType: "input",
-            attrs: {
-              type: "textarea",
-              rows: 3,
-            },
-          },
-          {
-            label: "投放状态",
-            prop: "advertiser_status",
-            itemType: "radio",
-            popoverContent: "账户停投后不会对计划状态和数据报表产生任何影响，在主面板和新建计划时将不再加载该账户的相关信息。",
-            options: [
-              { value: "1", label: "启用" },
-              { value: "0", label: "停投" },
-            ],
-          },
-        ];
-
-        const model = {
-          advertiser_name: "",
-          currency_code: "USD",
-          email: "",
-          advertiser_nick: "",
-          advertiser_id: "",
-          access_token: "",
-          refresh_token: "",
-          develop_app_secret: "",
-          develop_app_key: "",
-          owner_user_id: this.account.user_id,
-          media_project_id: "",
-          note: "",
-          advertiser_status: "1",
-        };
-
-        if (isEdit) {
-          Object.keys(model).forEach((key) => {
-            if (_.has(data, key)) {
-              model[key] = data[key];
-            }
-          });
-        }
-
-        const rules = {
-          advertiser_name: [{ required: true, message: "请输入账户名称", trigger: "blur" }],
-          email: [
-            { required: true, message: "请输入账户邮箱", trigger: "blur" },
-            { type: "email", message: "邮箱格式不正确", trigger: "blur" }
-          ],
-          currency_code: [{ required: true, message: "请选择货币", trigger: "change" }],
-          advertiser_id: [{ required: true, message: "请输入Org core ID", trigger: "blur" }],
-          access_token: [{ required: true, message: "请输入Organization ID", trigger: "blur" }],
-          refresh_token: [{ required: true, message: "请输入API Key", trigger: "blur" }],
-          develop_app_secret: [{ required: true, message: "请输入Secret Key", trigger: "blur" }],
-          develop_app_key: [{ required: true, message: "请输入Key ID", trigger: "blur" }],
-          owner_user_id: [{ required: true, message: "请选择所属人员", trigger: "change" }],
-          note: [{ trigger: "blur", validator: noteValidator }],
-        };
-
-        const result = {
-          title: isEdit ? "编辑账户" : "新增账户",
-          columns,
-          model,
-          rules,
-          isEdit,
-        };
-
-        return _.cloneDeep(result);
-      },
-      // 新增账户
-      handleAddAccount() {
-        const data = this.getFormData("add", {});
-        this.$refs.FormDialog.open(data);
-      },
-      // 编辑账户
-      handleEditAccount(row) {
-        const data = this.getFormData("edit", row);
-        this.$refs.FormDialog.open(data);
-      },
-      // 新增编辑
-      callFunction(params) {
-        Object.assign(params, {
-          media_type: "unity",
-          advertiser_ids: [''],
-        });
-
-        const { media_account_id } = this.currentRow;
-        if (media_account_id) {
-          params.media_account_id = media_account_id;
-        }
-
-        if (media_account_id) {
-          return mediaApi
-            .update(params)
-            .then((res) => {
-              this.$message.success("编辑成功");
-              return true;
-            })
-            .catch(() => false);
-        }
-
-        return this.$axios
-          .post("/Delo/Account/saveAccount", params)
-          .then((res) => {
-            this.$message.success("新增账户成功");
-            return true;
-          })
-          .catch(() => false);
-      },
-
-      callFunction () {
-        return this.$api.editAccount(this.form)
-      }
-    }
- */
-*/
-
 export default {
   name: "FormDialog",
   props: {
