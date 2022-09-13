@@ -1,3 +1,27 @@
+<!--
+  <el-form-item label="三张小图">
+    <MultipleImgUpload 
+      v-model="form.three_image"
+      key="three_image" 
+      :limit="3"
+      :maxSize="100" 
+      :maxWidth="306"
+      :maxHeight="306"
+      :mediaAccountIds="show_media_account_ids"
+      :apiFunc="apiFunc"
+      @changeLoading="changeLoading"
+      tip="图片大小为306像素x306像素，支持bmp, png, jpeg, jpg格式，每张不超过100KB"/>
+  </el-form-item>
+
+  methods: {
+    changeLoading (val) {
+      this.loading = val
+    },
+    apiFunc (data) {
+      return this.$api.uploadImage(data)
+    }
+  }
+-->
 <!-- MultipleImgUpload -->
 <template>
   <div>
@@ -16,7 +40,7 @@
           list-type="picture-card"
           action
           multiple
-          :accept="acceptList.join(',')" 
+          :accept="accept" 
           :show-file-list="false"
           v-if="currentAccount.length < limit"
           :before-upload="handleBeforeUpload"
@@ -35,33 +59,6 @@
 </template>
 
 <script>
-/**
- * @description: 上传图片
- *  <el-form-item label="三张小图">
-      <MultipleImgUpload 
-        v-model="form.three_image"
-        key="three_image" 
-        :limit="3"
-        :maxSize="100" 
-        :maxWidth="306"
-        :maxHeight="306"
-        :mediaAccountIds="show_media_account_ids"
-        :apiFunc="apiFunc"
-        @changeLoading="changeLoading"
-        tip="图片大小为306像素x306像素，支持bmp, png, jpeg, jpg格式，每张不超过100KB"/>
-    </el-form-item>
-
-    methods: {
-      changeLoading (val) {
-        this.loading = val
-      },
-      apiFunc (data) {
-        return this.$api.uploadImage(data)
-      }
-    }
-    
-*/
-
 export default {
   name: "MultipleImgUpload",
   model: {
@@ -73,11 +70,9 @@ export default {
       type: Array,
       default: () => [],
     },
-    acceptList: {
-      type: Array,
-      default: () => {
-        return ['image/jpeg', 'image/jpg', 'image/bmp', 'image/png']
-      },
+    accept: {
+      type: String,
+      default: ".bmp, .png, .jpeg, .jpg",
     },
     limit: {
       type: Number,
@@ -155,13 +150,12 @@ export default {
     async handleBeforeUpload(file) {
       try {
         this.uploadFiles = [];
-        const {maxSize, maxWidth, maxHeight, acceptList} = this;
+        const {maxSize, maxWidth, maxHeight, accept} = this;
         const size = file.size / 1024;
         
         const imageType = file.type.split('/')[1];
-        if (!acceptList.some(item => item.includes(imageType))) {
-          const message = acceptList.map(item => item.includes("/") ? item.split('/')[1] : item).join(',');
-          this.$message.warning(`仅支持${message}格式`);
+        if (!accept.includes(imageType)) {
+          this.$message.warning(`仅支持${accept}格式`);
           return Promise.reject();
         }
 
