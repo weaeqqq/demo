@@ -205,3 +205,14 @@ function getTimeSeries(startTime, endTime) {
 getTimeSeries("01:00", "01:30")
 '001000000000000000000000000000000000000000000000'
 */
+
+
+// 获取世界货币列表 https://coinyep.com/zh/currencies
+const getCurrencyList = () => {
+  return [...$(".cliccabile")].reduce((res, item) => {
+    const children = [...item.children].map(el => el.getAttribute("data-value"))
+    const [, name, symbol, id] = children;
+    res.push({name, id, symbol})
+    return res;
+  }, [])
+}
