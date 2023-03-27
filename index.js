@@ -216,3 +216,6 @@ const getCurrencyList = () => {
     return res;
   }, [])
 }
+
+// 数组扁平
+const flatFn = (arr) => arr.reduce((res, cur) => {Array.isArray(cur) ? res.concat(flatFn(cur)) : res.concat(val)}, [])
